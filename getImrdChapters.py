@@ -1,4 +1,6 @@
-def countImradWords ():
+import pandas as pd
+
+def countImradWords (root):
 # Count the word number of each IMRAD section
   
     brackets = '''()[]{}<>'''
@@ -245,6 +247,59 @@ def countImradWords ():
                 met.append(a.text)
             if a.tail not in met:
                 met.append(a.tail) 
+        if len(met) == 0:
+            for a in root.findall('.//sec[@sec-type="subjects | methods"]/title'):
+                met.append(a.text)
+                met.append(a.tail)
+            for a in root.findall('.//sec[@sec-type="subjects | methods"]/p'):
+                met.append(a.text)
+                met.append(a.tail)
+            for a in root.findall('.//sec[@sec-type="subjects | methods"]/sec/title'):
+                met.append(a.text)
+                met.append(a.tail)
+            for a in root.findall('.//sec[@sec-type="subjects | methods"]/sec/p'):
+                met.append(a.text)
+                met.append(a.tail)                
+            for a in root.findall('.//sec[@sec-type="subjects | methods"]/sec/p/italic'):
+                met.append(a.text)
+                met.append(a.tail)
+            for a in root.findall('.//sec[@sec-type="subjects | methods"]/sec/p/bold'):
+                met.append(a.text)
+                met.append(a.tail) 
+            for a in root.findall('.//sec[@sec-type="subjects | methods"]/sec/p/bold/italic'):
+                met.append(a.text)
+                met.append(a.tail)
+            for a in root.findall('.//sec[@sec-type="subjects | methods"]/sec/p/italic/bold'):
+                met.append(a.text)
+                met.append(a.tail)    
+            for a in root.findall('.//sec[@sec-type="subjects | methods"]/sec/list[@list-type="bullet"]/list-item/p'):
+                met.append(a.text)
+                met.append(a.tail)     
+            for a in root.findall('.//sec[@sec-type="subjects | methods"]/sec/list[@list-type="bullet"]/list-item/p/italic'):
+                met.append(a.text)
+                met.append(a.tail)
+            for a in root.findall('.//sec[@sec-type="subjects | methods"]/sec/p/xref'):
+                met.append(a.text)
+                met.append(a.tail)   
+            for a in root.findall('.//sec[@sec-type="subjects | methods"]/sec/p/xref/'):
+                met.append(a.text)
+                met.append(a.tail)     
+            for a in root.findall('.//sec[@sec-type="subjects | methods"]/p/xref'):
+                met.append(a.text)
+                met.append(a.tail)   
+            for a in root.findall('.//sec[@sec-type="subjects | methods"]/p/xref/'):
+                met.append(a.text)
+                met.append(a.tail)     
+            for a in root.findall('.//sec[@sec-type="subjects | methods"]/sec/p/'):
+                if a.text not in met:
+                    met.append(a.text)
+                if a.tail not in met:
+                    met.append(a.tail)
+            for a in root.findall('.//sec[@sec-type="materials | methods"]/p/'):
+                if a.text not in met:
+                    met.append(a.text)
+                if a.tail not in met:
+                    met.append(a.tail)        
 
     for val in met: 
         if val != None : 
@@ -600,3 +655,25 @@ def countImradWords ():
     
     global conclusion_length
     conclusion_length = len(conclusion)
+    
+    # Word number
+    return (abstract_length +  introduction_length + methods_length + 
+            results_length + discussion_length + conclusion_length)
+            
+            
+def createImrdDf (current_doi):            
+            
+    global imrd_info
+    imrd_info = pd.DataFrame({'doi':[current_doi],                            
+                              'abstractSize':[abstract_length],
+                              'introductionSize':[introduction_length],
+                              'methodSize':[methods_length],
+                              'resultSize':[results_length],
+                              'discussionSize':[discussion_length],
+                              'ResultDiscussMerged': [resultDiscussTogether],
+                              'DiscussConclMerged': [discussResMerged],
+                              'conclusionSize':[conclusion_length]})
+                              
+    print("\nIMRD information: \n")
+    print(imrd_info)
+    return(imrd_info)

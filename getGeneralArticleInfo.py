@@ -1,4 +1,24 @@
-def get_ResearchArea ():
+import ORC_main
+import string
+import pandas as pd
+
+global day_accepted
+day_accepted = []
+global month_accepted
+month_accepted = []
+global year_accepted
+year_accepted = []
+global day_published
+day_published = []
+global month_published
+month_published = []
+global year_published
+year_published = []
+
+df_accpt = pd.DataFrame()
+df_publ = pd.DataFrame()
+
+def get_ResearchArea(current_doi):
 
     medDOI_file = open("orc_med_doi.csv", "r")
     socDOI_file = open("orc_soc_doi.csv", "r")
@@ -21,7 +41,7 @@ def get_ResearchArea ():
     medDOI_file.close()
     socDOI_file.close()
 
-def get_MaterialsNo ():
+def get_MaterialsNo (root):
 # Get number of figures, tables and supplementary material:
 
     # Get number of figures:
@@ -68,8 +88,9 @@ def get_MaterialsNo ():
             if elem.text.startswith('Appendix'): 
                 noSuppl = noSuppl + 1
 
-def get_articleInfo ():
-        
+def get_articleInfo (root):
+
+            
     # Get date when an article version was accepted:     
     for elem in root.findall('.//history/date[@date-type="accepted"]/day'):
         day_accepted.append(elem.text)
@@ -95,6 +116,8 @@ def get_articleInfo ():
     version = pub_status.split()[1][0] # pub_status.split()[1] will return '1;' 
                                        # pub_status.split()[1][0] will return '1'
 
+def createMaterialsInfoDf (current_doi, pdfPagesNum, article_length):
+
     # Create an DataFrame table for accepted   
     df_accpt = pd.DataFrame({'day':day_accepted,
                             'month':month_accepted,
@@ -110,11 +133,11 @@ def get_articleInfo ():
 
     #convert to datetime
     df_publ['date'] = pd.to_datetime(df_publ[['day','month','year']])
-
+    
     # Create a DataFrame table containing relevant article information:
-    global article_info
-    article_info = pd.DataFrame({'doi':[current_doi],
-                                 'version':[version],
+    global materials_info
+    materials_info = pd.DataFrame({'doi':[current_doi],
+                                 #'version':[version],
                                  'researchArea':[research_area],
                                  'NoPdfPages':pdfPagesNum[-1],
                                  'dateAccepted':[df_accpt['date'][0]],
@@ -124,14 +147,8 @@ def get_articleInfo ():
                                  'NoFormulas':noFormulas,
                                  'NoSupplementary': [noSuppl],
                                  'NoDataAvailability':[noDataAvail],
-                                 'abstractSize':[abstract_length],
-                                 'introductionSize':[introduction_length],
-                                 'methodsSize':[methods_length],
-                                 'resultsSize':[results_length],
-                                 'discussionSize':[discussion_length],
-                                 'ResultsDiscussMerged': [resultDiscussTogether],
-                                 'DiscussConclMerged': [discussResMerged],
-                                 'conclusionSize':[conclusion_length],
                                  'totalArticleSize':[article_length]})
-    print("\nArticle information: \n")
-    print(article_info)
+    print("\nMaterials information: \n")
+    print(materials_info)
+    
+    return(materials_info)

@@ -1,7 +1,89 @@
-def get_reviewsInfo ():
+import ORC_main
+
+import re
+import pandas as pd
+
+def get_authorsResponses (root): 
+# Get authors' responses to reviewers:
+
+    global responseID_responses
+    responseID_responses = []
+    for element in root.findall('.//sub-article[@article-type="response"]'):
+            responseID_responses.append(element.attrib)
+            for elem in element.findall('.//body/p'):
+                responseID_responses.append(elem.text)
+                responseID_responses.append(elem.tail)
+            for elem in element.findall('.//body/p/bold'):
+                responseID_responses.append(elem.text) 
+                responseID_responses.append(elem.tail)
+            for elem in element.findall('.//body/p/italic'):
+                responseID_responses.append(elem.text) 
+                responseID_responses.append(elem.tail)
+            for elem in element.findall('.//body/p/list/list-item/p'):
+                responseID_responses.append(elem.text) 
+                responseID_responses.append(elem.tail) 
+            for elem in element.findall('.//body/p/list/list-item/p/bold'):
+                responseID_responses.append(elem.text) 
+                responseID_responses.append(elem.tail) 
+            for elem in element.findall('.//body/p/list/list-item/p/italic'):
+                responseID_responses.append(elem.text) 
+                responseID_responses.append(elem.tail)     
+            for elem in element.findall('.//body/p/'):
+                if elem.text not in responseID_responses:
+                    responseID_responses.append(elem.text)
+                if elem.tail not in responseID_responses:    
+                    responseID_responses.append(elem.tail)
+
+    idxs = []
+    for idx, item in enumerate(responseID_responses):
+        if "article-type" in item:
+            idxs.append(idx)
+
+    for i in range(len(idxs)):
+        responseID_responses[idxs[i]] = str(responseID_responses[idxs[i]])        
+
+    temp_list1 = []
+    temp_list2 = []
+    for el in responseID_responses:
+        newstr = el.replace("{'article-type': 'response', 'id': '", '' )
+        temp_list1.append(newstr)
+
+    newstr = ""    
+    for el in temp_list1:
+        newstr = el.replace("'}", '' )
+        newstr = newstr.replace("\n", '' )
+        newstr = newstr.replace("\xa0", '' )
+        temp_list2.append(newstr)
+
+    responses_indeces = []
+    responses_indeces = [ i for i, word in enumerate(temp_list2) if re.search("^comment\d", word)]
+
+    global responses_separated
+    responses_separated = []
+    for i in range(len(responses_indeces)):
+        if i < (len(responses_indeces)-1):
+            responses_separated.append([' '.join(temp_list2[responses_indeces[i]+1 : responses_indeces[i+1]])]) 
+        else:
+            responses_separated.append([' '.join(temp_list2[responses_indeces[i]+1 : len(temp_list2)])])
+
+    print(len(responses_separated))
+    
+
+def get_reviewsInfo (root, current_doi):
 # Get reviewers' recommendations, comments and dates 
 # for each version of an article
-
+    
+    global versionNo
+    versionNo = []
+    global refRecomm
+    refRecomm = []
+    global recomm_day
+    recomm_day = []
+    global recomm_month
+    recomm_month = []
+    global recomm_year
+    recomm_year = []
+    
     # Get version of an article:
     for elem in root.findall('.//sub-article[@article-type="ref-report"]/front-stub/title-group/article-title'):
         versionNo.append(elem.text)
@@ -115,8 +197,7 @@ def get_reviewsInfo ():
     # Check for case when there are no responses to some reviewers' comments:
     if len(responses_separated) < len(comments_separated):
         for i in range(len(comments_separated)-len(responses_separated)):
-            responses_separated.append("No response")
-      
+            responses_separated.append("No response")    
             
     print("No comments: ", len(comments_separated))        
     print("No responses: ", len(responses_separated))
@@ -129,7 +210,7 @@ def get_reviewsInfo ():
         temp_resp_1 = responses_separated[0] + responses_separated[1]
         temp_resp_2 = []
         temp_resp_2 = [responses_separated[2], temp_resp_1]
-        # TODO: make this not hardocoded
+        # TODO: make this not hardocoded ?
         
         review_info = pd.DataFrame({'dateReviewed':rev_to_date['date'],
                                 'Version':verNo,
@@ -151,7 +232,7 @@ def get_reviewsInfo ():
     print("\nReview information: \n")
     print(review_info)
 
-def get_reviewersInfo ():
+def get_reviewersInfo (root):
 # Get reviewers' full names and match with the report ID
 # even in cases when more reviewers comment together as a team
 
@@ -232,3 +313,9 @@ def get_reviewersInfo ():
     
     print("\nReviewers information: \n")
     print(reportID_fullNames)
+    
+    
+    reviews_all = pd.DataFrame.merge(reportID_fullNames, review_info, on='reportID')
+    print("\nMERGED REVIEW TABLE\n", reviews_all)
+    
+    return (reviews_all)
