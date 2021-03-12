@@ -207,19 +207,41 @@ def get_reviewsInfo (root, current_doi):
     
     # In case there are more authors' answers for a single review, merge two answers:
     if len(comments_separated) < len(responses_separated):
-        temp_resp_1 = responses_separated[0] + responses_separated[1]
-        temp_resp_2 = []
-        temp_resp_2 = [responses_separated[2], temp_resp_1]
-        # TODO: make this not hardocoded ?
+        if (len(responses_separated) - len(comments_separated) == 1):
+            temp_resp_1 = responses_separated[0] + responses_separated[1]
+            temp_resp_2 = []
+            if (len(responses_separated) == 2):
+                temp_resp_2 = [temp_resp_1]
+            if (len(responses_separated) == 3):
+                temp_resp_2 = [responses_separated[2], temp_resp_1]
+            if (len(responses_separated) == 4):
+                temp_resp_2 = [responses_separated[3], responses_separated[2], temp_resp_1]
+            if (len(responses_separated) == 5):
+                temp_resp_2 = [responses_separated[3], responses_separated[3], responses_separated[2], temp_resp_1]
+            print("temp_resp: ", len(temp_resp_2))
+            
+        if (len(responses_separated) - len(comments_separated) == 2):
+            temp_resp_1 = responses_separated[0] + responses_separated[1] + responses_separated[2]
+            temp_resp_2 = []
+            if (len(responses_separated) == 3):
+                temp_resp_2 = [temp_resp_1]
+            if (len(responses_separated) == 4):
+                temp_resp_2 = [responses_separated[3], temp_resp_1]
+            if (len(responses_separated) == 5):
+                temp_resp_2 = [responses_separated[4], responses_separated[3],  temp_resp_1]
+            print("temp_resp: ", len(temp_resp_2))    
+            # TODO: make this not so hardocoded ?
         
-        review_info = pd.DataFrame({'dateReviewed':rev_to_date['date'],
-                                'Version':verNo,
-                                'doi':fullDoi_fill,
-                                'Recommendation':refRecomm,
-                                'reportID':reportIDs_separated,
-                                'comments':comments_separated,
-                                'authors response':temp_resp_2})
-        
+        if (len(temp_resp_2) == len(comments_separated)):
+            review_info = pd.DataFrame({'dateReviewed':rev_to_date['date'],
+                                    'Version':verNo,
+                                    'doi':fullDoi_fill,
+                                    'Recommendation':refRecomm,
+                                    'reportID':reportIDs_separated,
+                                    'comments':comments_separated,
+                                    'authors response':temp_resp_2})
+        else:
+            print("REVIEW ARRAY UNEVEN")
     else:
         review_info = pd.DataFrame({'dateReviewed':rev_to_date['date'],
                                 'Version':verNo,

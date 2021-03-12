@@ -2,19 +2,6 @@ import ORC_main
 import string
 import pandas as pd
 
-global day_accepted
-day_accepted = []
-global month_accepted
-month_accepted = []
-global year_accepted
-year_accepted = []
-global day_published
-day_published = []
-global month_published
-month_published = []
-global year_published
-year_published = []
-
 df_accpt = pd.DataFrame()
 df_publ = pd.DataFrame()
 
@@ -25,18 +12,53 @@ def get_ResearchArea(current_doi):
     
     global research_area
     research_area = ""
+    
+    med_add = []
+    soc_add = []
+
+    for line in medDOI_file:
+        if line.endswith('2\n'):
+            med_add.append(line[:-2] + str(1))
+        if line.endswith('3\n'):
+            med_add.append(line[:-2] + str(2))  
+        if line.endswith('4\n'):
+            med_add.append(line[:-2] + str(3))
+
+    for line in socDOI_file:
+        if line.endswith('2\n'):
+            soc_add.append(line[:-2] + str(1))
+        if line.endswith('3\n'):
+            soc_add.append(line[:-2] + str(2))  
+        if line.endswith('4\n'):
+            soc_add.append(line[:-2] + str(3))
+            
+    medDOI_file.close()
+    socDOI_file.close()
+    
+    medDOI_file = open("orc_med_doi.csv", "r")
+    socDOI_file = open("orc_soc_doi.csv", "r")       
 
     for line in medDOI_file:
         values = line.split()
-        if current_doi in values:
+        if current_doi in line:
+        #if current_doi in values:
             print("Subject Area: Medicine and health sciences")
             research_area = "Medical"
                     
     for line in socDOI_file:
         values = line.split()
-        if current_doi in values:
+        if current_doi in line:
+        #if current_doi in values:
             print("Subject Area: Social sciences")
             research_area = "Social"
+            
+    if(research_area == ''):
+        if current_doi in med_add:
+            print("Subject Area: Medicine and health sciences")
+            research_area = "Medical"
+        if current_doi in soc_add: 
+            print("Subject Area: Social sciences")
+            research_area = "Social"        
 
     medDOI_file.close()
     socDOI_file.close()
@@ -90,6 +112,18 @@ def get_MaterialsNo (root):
 
 def get_articleInfo (root):
 
+    global day_accepted
+    day_accepted = []
+    global month_accepted
+    month_accepted = []
+    global year_accepted
+    year_accepted = []
+    global day_published
+    day_published = []
+    global month_published
+    month_published = []
+    global year_published
+    year_published = []
             
     # Get date when an article version was accepted:     
     for elem in root.findall('.//history/date[@date-type="accepted"]/day'):

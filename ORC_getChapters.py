@@ -1,14 +1,19 @@
+import string
 import pandas as pd
 
-def countImradWords (root):
+def countImrdWords (root):
 # Count the word number of each IMRAD section
   
-    brackets = '''()[]{}<>'''
+    brackets = '''()[]{}<>''' # remove?
     
     # Abstract
+    global abstr
     abstr = []
     abstract = []
     intro_str = ""
+    global abstract_length
+    abstract_length = 0
+    
     for a in root.findall('.//abstract/title'):
         abstr.append(a.text)
         abstr.append(a.tail)
@@ -55,19 +60,23 @@ def countImradWords (root):
     
     # Remove comma if it appears as separated list element
     # so to avoid counting it as a word:
-    try:
-        abstract.remove(',')
-        abstract.remove('.')
-    except:
-        pass
+    abstract = [''.join(c for c in s if c not in string.punctuation) for s in abstract]
+    abstract = [s for s in abstract if s]
+
+    # Additional cleaning:
+    abstract_clean = []
+    for e in abstract:
+        if e != '.' and e != ',' and e != '–' and e != '=':
+            abstract_clean.append(e)     
     
-    global abstract_length
-    abstract_length = len(abstract)
+    abstract_length = len(abstract_clean)
 
     # Introduction 
     intro = []
     introduction = []
     intro_str = ""
+    global introduction_length
+    introduction_length = 0
 
     for a in root.findall('.//sec[@sec-type="intro"]/title'):
         intro.append(a.text)
@@ -99,12 +108,20 @@ def countImradWords (root):
     for a in root.findall('.//sec[@sec-type="intro"]/sec/p/bold'):
         intro.append(a.text)
         intro.append(a.tail) 
+    for a in root.findall('.//sec[@sec-type="intro"]/sec/p/italic/bold'):
+        intro.append(a.text)
+        intro.append(a.tail) 
+    for a in root.findall('.//sec[@sec-type="intro"]/sec/p/bold/italic'):
+        intro.append(a.text)
+        intro.append(a.tail)     
     for a in root.findall('.//sec[@sec-type="intro"]/p/xref'):
         intro.append(a.text)
         intro.append(a.tail) 
     for a in root.findall('.//sec[@sec-type="intro"]/p/xref/'):
-        intro.append(a.text)
-        intro.append(a.tail)    
+        if a.text not in intro:
+            intro.append(a.text)
+        if a.tail not in intro:
+            intro.append(a.tail)    
     for a in root.findall('.//sec[@sec-type="intro"]/sec/p/'):
         if a.text not in intro:
             intro.append(a.text)
@@ -127,13 +144,16 @@ def countImradWords (root):
             intro_str = intro_str.replace(ele, " ")
     introduction = intro_str.split()
     
-    try:
-        introduction.remove(',')
-    except:
-        pass
-    
-    global introduction_length
-    introduction_length = len(introduction)
+    introduction = [''.join(c for c in s if c not in string.punctuation) for s in introduction]
+    introduction = [s for s in introduction if s]
+
+    # Additional cleaning:
+    introduction_clean = []
+    for e in introduction:
+        if e != '.' and e != ',' and e != '–' and e != '=':
+            introduction_clean.append(e)
+            
+    introduction_length = len(introduction_clean)
 
     # Methods
     met = []
@@ -176,14 +196,18 @@ def countImradWords (root):
         met.append(a.text)
         met.append(a.tail)   
     for a in root.findall('.//sec[@sec-type="methods"]/sec/p/xref/'):
-        met.append(a.text)
-        met.append(a.tail)     
+        if a.text not in met:
+            met.append(a.text)
+        if a.tail not in met:
+            met.append(a.tail)    
     for a in root.findall('.//sec[@sec-type="methods"]/p/xref'):
         met.append(a.text)
         met.append(a.tail)   
     for a in root.findall('.//sec[@sec-type="methods"]/p/xref/'):
-        met.append(a.text)
-        met.append(a.tail)     
+        if a.text not in met:
+            met.append(a.text)
+        if a.tail not in met:
+            met.append(a.tail)    
     for a in root.findall('.//sec[@sec-type="methods"]/sec/p/'):
         if a.text not in met:
             met.append(a.text)
@@ -229,14 +253,18 @@ def countImradWords (root):
             met.append(a.text)
             met.append(a.tail)   
         for a in root.findall('.//sec[@sec-type="materials | methods"]/sec/p/xref/'):
-            met.append(a.text)
-            met.append(a.tail)     
+            if a.text not in met:
+                met.append(a.text)
+            if a.tail not in met:
+                met.append(a.tail)    
         for a in root.findall('.//sec[@sec-type="materials | methods"]/p/xref'):
             met.append(a.text)
             met.append(a.tail)   
         for a in root.findall('.//sec[@sec-type="materials | methods"]/p/xref/'):
-            met.append(a.text)
-            met.append(a.tail)     
+            if a.text not in met:
+                met.append(a.text)
+            if a.tail not in met:
+                met.append(a.tail)     
         for a in root.findall('.//sec[@sec-type="materials | methods"]/sec/p/'):
             if a.text not in met:
                 met.append(a.text)
@@ -282,20 +310,24 @@ def countImradWords (root):
                 met.append(a.text)
                 met.append(a.tail)   
             for a in root.findall('.//sec[@sec-type="subjects | methods"]/sec/p/xref/'):
-                met.append(a.text)
-                met.append(a.tail)     
+                if a.text not in met:
+                    met.append(a.text)
+                if a.tail not in met:
+                    met.append(a.tail)   
             for a in root.findall('.//sec[@sec-type="subjects | methods"]/p/xref'):
                 met.append(a.text)
                 met.append(a.tail)   
             for a in root.findall('.//sec[@sec-type="subjects | methods"]/p/xref/'):
-                met.append(a.text)
-                met.append(a.tail)     
+                if a.text not in met:
+                    met.append(a.text)
+                if a.tail not in met:
+                    met.append(a.tail)    
             for a in root.findall('.//sec[@sec-type="subjects | methods"]/sec/p/'):
                 if a.text not in met:
                     met.append(a.text)
                 if a.tail not in met:
                     met.append(a.tail)
-            for a in root.findall('.//sec[@sec-type="materials | methods"]/p/'):
+            for a in root.findall('.//sec[@sec-type="subjects | methods"]/p/'):
                 if a.text not in met:
                     met.append(a.text)
                 if a.tail not in met:
@@ -305,19 +337,29 @@ def countImradWords (root):
         if val != None : 
             methods.append(val) 
     met_str = ''.join(methods)
+    met_str = met_str.replace("\n","");
+    for ele in met_str:  
+        if ele in brackets:  
+            met_str = met_str.replace(ele, " ")
     methods = met_str.split()
 
-    try:
-        methods.remove(',')
-    except:
-        pass
+    methods = [''.join(c for c in s if c not in string.punctuation) for s in methods]
+    methods = [s for s in methods if s]
 
-    methods_length = len(methods)
+    # Additional cleaning:
+    methods_clean = []
+    for e in methods:
+        if e != '.' and e != ',' and e != '–' and e != '=':
+            methods_clean.append(e)
+            
+    methods_length = len(methods_clean)
 
     # Results
     res = []
     results = []
     res_str = ""
+    global results_length
+    results_length = 0
     global resultDiscussTogether
     resultDiscussTogether = False
     global discussResMerged
@@ -338,18 +380,25 @@ def countImradWords (root):
     for a in root.findall('.//sec[@sec-type="results"]/p/italic'):
         res.append(a.text)
         res.append(a.tail)
+    for a in root.findall('.//sec[@sec-type="results"]/p/bold'):
+        res.append(a.text)
+        res.append(a.tail)    
     for a in root.findall('.//sec[@sec-type="results"]/sec/p/xref'):
         res.append(a.text)
         res.append(a.tail)   
     for a in root.findall('.//sec[@sec-type="results"]/sec/p/xref/'):
-        res.append(a.text)
-        res.append(a.tail)    
+        if a.text not in res:      
+            res.append(a.text)
+        if a.tail not in res:    
+            res.append(a.tail)     
     for a in root.findall('.//sec[@sec-type="results"]/p/xref'):
         res.append(a.text)
         res.append(a.tail)   
     for a in root.findall('.//sec[@sec-type="results"]/p/xref/'):
-        res.append(a.text)
-        res.append(a.tail)    
+        if a.text not in res:      
+            res.append(a.text)
+        if a.tail not in res:    
+            res.append(a.tail)   
     for a in root.findall('.//sec[@sec-type="results"]/sec/title'):
         res.append(a.text)
         res.append(a.tail)
@@ -371,25 +420,22 @@ def countImradWords (root):
     for a in root.findall('.//sec[@sec-type="results"]/sec/list[@list-type="bullet"]/list-item/p/italic'):
         res.append(a.text)
         res.append(a.tail)
-    for a in root.findall('.//sec[@sec-type="results"]/p/'):
-        if a.text not in res:      
-            res.append(a.text)
-        if a.tail not in res:    
-            res.append(a.tail)    
     for a in root.findall('.//sec[@sec-type="results"]/sec/p/'):
         if a.text not in res:      
             res.append(a.text)
         if a.tail not in res:    
             res.append(a.tail)    
+    for a in root.findall('.//sec[@sec-type="results"]/p/'):
+        if a.text not in res:      
+            res.append(a.text)
+        if a.tail not in res:    
+            res.append(a.tail)        
     # Somethimes Results and Discussion are under same section:    
     if len(res) == 0:
-        for a in root.findall('.//sec[@sec-type="results | discussion"]/'):
-            res.append(a.text)
-            res.append(a.tail)
-        for a in root.findall('.//sec[@sec-type="results | discussion"]/sec/'):
+        for a in root.findall('.//sec[@sec-type="results | discussion"]/sec/title'):
             res.append(a.text)
             res.append(a.tail)    
-        for a in root.findall('.//sec[@sec-type="results | discussion"]/sec/title'):
+        for a in root.findall('.//sec[@sec-type="results | discussion"]/sec/p'):
             res.append(a.text)
             res.append(a.tail)
         for a in root.findall('.//sec[@sec-type="results | discussion"]/sec/p/italic'):
@@ -415,18 +461,24 @@ def countImradWords (root):
             res_str = res_str.replace(ele, " ")
     results = res_str.split()
 
-    try:
-        results.remove(',')
-    except:
-        pass
+    results = [''.join(c for c in s if c not in string.punctuation) for s in results]
+    results = [s for s in results if s]
 
-    global results_length
-    results_length = len(results)  
+    # Additional cleaning:
+    results_clean = []
+    for e in results:
+        if e != '.' and e != ',' and e != '–' and e != '=':
+            results_clean.append(e)
+            
+    results_length = len(results_clean)  
         
     # Discussion
     discuss = []
     discussion = [] 
-    discuss_str = ""
+    discuss_str = ""  
+    global discussion_length
+    discussion_length = 0
+    
     for a in root.findall('.//sec[@sec-type="discussion"]/title'):
         discuss.append(a.text) 
         discuss.append(a.tail)
@@ -461,23 +513,20 @@ def countImradWords (root):
         discuss.append(a.text)
         discuss.append(a.tail) 
     for a in root.findall('.//sec[@sec-type="discussion"]/p/xref/'):
-        discuss.append(a.text)
-        discuss.append(a.tail)     
-    for a in root.findall('.//sec[@sec-type="discussion"]/p/'):
         if a.text not in discuss:
             discuss.append(a.text) 
         if a.tail not in discuss:      
-            discuss.append(a.tail)
+            discuss.append(a.tail) 
     for a in root.findall('.//sec[@sec-type="discussion"]/sec/p/'):
         if a.text not in discuss:
             discuss.append(a.text) 
         if a.tail not in discuss:      
             discuss.append(a.tail) 
-    for a in root.findall('.//sec[@sec-type="discussion"]/sec/'):
+    for a in root.findall('.//sec[@sec-type="discussion"]/p/'):
         if a.text not in discuss:
-            discuss.append(a.text)
-        if a.tail not in discuss: 
-            discuss.append(a.tail)        
+            discuss.append(a.text) 
+        if a.tail not in discuss:      
+            discuss.append(a.tail)      
     #for a in root.findall('.//sec[@sec-type="discussion"]/sec/p/sup'):
      #   discuss.append(a.tail)
     if len(discuss) == 0:
@@ -516,22 +565,19 @@ def countImradWords (root):
             discuss.append(a.text)
             discuss.append(a.tail) 
         for a in root.findall('.//sec[@sec-type="discussion | conclusions"]/p/xref/'):
-            discuss.append(a.text)
-            discuss.append(a.tail)     
-        for a in root.findall('.//sec[@sec-type="discussion | conclusions"]/p/'):
             if a.text not in discuss:
                 discuss.append(a.text) 
             if a.tail not in discuss:      
-                discuss.append(a.tail)
+                discuss.append(a.tail)  
         for a in root.findall('.//sec[@sec-type="discussion | conclusions"]/sec/p/'):
             if a.text not in discuss:
                 discuss.append(a.text) 
             if a.tail not in discuss:      
-                discuss.append(a.tail) 
-        for a in root.findall('.//sec[@sec-type="discussion | conclusions"]/sec/'):
+                discuss.append(a.tail)                
+        for a in root.findall('.//sec[@sec-type="discussion | conclusions"]/p/'):
             if a.text not in discuss:
-                discuss.append(a.text)
-            if a.tail not in discuss: 
+                discuss.append(a.text) 
+            if a.tail not in discuss:      
                 discuss.append(a.tail)
         if len(discuss) != 0:
             discussResMerged = True
@@ -549,24 +595,35 @@ def countImradWords (root):
                 
     discussion = discuss_str.split()
     
-    try:
-        discussion.remove(',')
-    except:
-        pass
+    discussion = [''.join(c for c in s if c not in string.punctuation) for s in discussion]
+    discussion = [s for s in discussion if s]
     
-    global discussion_length
-    discussion_length = len(discussion)
+    discussion_clean = []
+    for e in discussion:
+        if e != '.' and e != ',' and e != '–' and e != '=':
+            discussion_clean.append(e)
+            
+    discussion_length = len(discussion_clean)
           
     # Conclusion
     concl = []
     conclusion = []
-    concl_str = ""
+    concl_str = ""   
+    global conclusion_length
+    conclusion_length = 0
+    
     for a in root.findall('.//sec[@sec-type="conclusions"]/title'):
         concl.append(a.text)
         concl.append(a.tail)   
     for a in root.findall('.//sec[@sec-type="conclusions"]/p'):
         concl.append(a.text)
         concl.append(a.tail)
+    for a in root.findall('.//sec[@sec-type="conclusions"]/p/italic'):
+        concl.append(a.text)
+        concl.append(a.tail) 
+    for a in root.findall('.//sec[@sec-type="conclusions"]/p/bold'):
+        concl.append(a.text)
+        concl.append(a.tail)        
     for a in root.findall('.//sec[@sec-type="conclusions"]/sec/title'):
         concl.append(a.text)
         concl.append(a.tail) 
@@ -589,8 +646,10 @@ def countImradWords (root):
         concl.append(a.text)
         concl.append(a.tail)  
     for a in root.findall('.//sec[@sec-type="conclusions"]/p/xref/'):
-        concl.append(a.text)
-        concl.append(a.tail)    
+        if a.text not in concl:
+            concl.append(a.text)
+        if a.tail not in concl:    
+            concl.append(a.tail)      
     for a in root.findall('.//sec[@sec-type="conclusions"]/sec/p/'):
         if a.text not in concl:
             concl.append(a.text)
@@ -603,39 +662,39 @@ def countImradWords (root):
             concl.append(a.tail)
     if len(concl) == 0:
         for a in root.findall('.//sec[@sec-type="summary | conclusions"]/title'):
-            nonImrd.append(a.text)
-            nonImrd.append(a.tail)   
+            concl.append(a.text)
+            concl.append(a.tail)   
         for a in root.findall('.//sec[@sec-type="summary | conclusions"]/p'):
-            nonImrd.append(a.text)
-            nonImrd.append(a.tail)      
+            concl.append(a.text)
+            concl.append(a.tail)      
         for a in root.findall('.//sec[@sec-type="summary | conclusions"]/sec/title'):
-            nonImrd.append(a.text)
-            nonImrd.append(a.tail)   
+            concl.append(a.text)
+            concl.append(a.tail)   
         for a in root.findall('.//sec[@sec-type="summary | conclusions"]/sec/p'):
-            nonImrd.append(a.text)
-            nonImrd.append(a.tail)
+            concl.append(a.text)
+            concl.append(a.tail)
         for a in root.findall('.//sec[@sec-type="summary | conclusions"]/sec/p/italic'):
-            nonImrd.append(a.text)
-            nonImrd.append(a.tail)    
+            concl.append(a.text)
+            concl.append(a.tail)    
         for a in root.findall('.//sec[@sec-type="summary | conclusions"]/sec/p/bold'):
-            nonImrd.append(a.text)
-            nonImrd.append(a.tail) 
+            concl.append(a.text)
+            concl.append(a.tail) 
         for a in root.findall('.//sec[@sec-type="summary | conclusions"]/sec/p/bold/italic'):
-            nonImrd.append(a.text)
-            nonImrd.append(a.tail)  
+            concl.append(a.text)
+            concl.append(a.tail)  
         for a in root.findall('.//sec[@sec-type="summary | conclusions"]/sec/p/italic/bold'):
-            nonImrd.append(a.text)
-            nonImrd.append(a.tail)     
+            concl.append(a.text)
+            concl.append(a.tail)     
         for a in root.findall('.//sec[@sec-type="summary | conclusions"]/sec/p/'):
-            if a.text not in nonImrd:
-                nonImrd.append(a.text)
-            if a.tail not in nonImrd:    
-                nonImrd.append(a.tail)   
+            if a.text not in concl:
+                concl.append(a.text)
+            if a.tail not in concl:    
+                concl.append(a.tail)   
         for a in root.findall('.//sec[@sec-type="summary | conclusions"]/p/'):
-            if a.text not in nonImrd:
-                nonImrd.append(a.text)
-            if a.tail not in nonImrd:    
-                nonImrd.append(a.tail) 
+            if a.text not in concl:
+                concl.append(a.text)
+            if a.tail not in concl:    
+                concl.append(a.tail) 
         
     for val in concl: 
         if val != None : 
@@ -648,13 +707,15 @@ def countImradWords (root):
             concl_str = concl_str.replace(ele, " ")
     conclusion = concl_str.split()
     
-    try:
-        conclusion.remove(',')
-    except:
-        pass
+    conclusion = [''.join(c for c in s if c not in string.punctuation) for s in conclusion]
+    conclusion = [s for s in conclusion if s]
     
-    global conclusion_length
-    conclusion_length = len(conclusion)
+    conclusion_clean = []
+    for e in conclusion:
+        if e != '.' and e != ',' and e != '–' and e != '=':
+            conclusion_clean.append(e)
+            
+    conclusion_length = len(conclusion_clean)
     
     # Word number
     return (abstract_length +  introduction_length + methods_length + 
@@ -677,3 +738,207 @@ def createImrdDf (current_doi):
     print("\nIMRD information: \n")
     print(imrd_info)
     return(imrd_info)
+    
+def countAllWords (root):
+
+    # NonIMRD chapters
+    nonImrd = []
+    nonImrdChapter = []
+    nonImrd_str = ""
+    brackets = '''()[]{}<>'''
+
+    for a in root.findall('.//body/sec/title'):
+        nonImrd.append(a.text)
+        nonImrd.append(a.tail) 
+    for a in root.findall('.//body/sec/p'):
+        nonImrd.append(a.text)
+        nonImrd.append(a.tail)
+    for a in root.findall('.//body/sec/p/underline'):
+        nonImrd.append(a.text)
+        nonImrd.append(a.tail)    
+    for a in root.findall('.//body/sec/p/italic'):
+        nonImrd.append(a.text)
+        nonImrd.append(a.tail)
+    for a in root.findall('.//body/sec/p/bold'):
+        nonImrd.append(a.text)
+        nonImrd.append(a.tail) 
+    for a in root.findall('.//body/sec/p/bold/italic'):
+        nonImrd.append(a.text)
+        nonImrd.append(a.tail) 
+    for a in root.findall('.//body/sec/p/italic/bold'):
+        nonImrd.append(a.text)
+        nonImrd.append(a.tail)        
+    for a in root.findall('.//body/sec/p/boxed-text/caption/title'):
+        nonImrd.append(a.text)
+        nonImrd.append(a.tail)
+    for a in root.findall('.//body/sec/p/boxed-text/p'):
+        nonImrd.append(a.text)
+        nonImrd.append(a.tail)  
+    for a in root.findall('.//body/sec/p/xref'):
+        nonImrd.append(a.text)
+        nonImrd.append(a.tail) 
+    for a in root.findall('.//body/sec/p/sup/xref'):
+        nonImrd.append(a.text)
+        nonImrd.append(a.tail)   
+    for a in root.findall('.//body/sec/p/sup/'):
+        if a.text not in nonImrd:
+            nonImrd.append(a.text)
+        if a.tail not in nonImrd:    
+            nonImrd.append(a.tail)          
+    for a in root.findall('.//body/sec/p/xref/'):
+        if a.text not in nonImrd:
+            nonImrd.append(a.text)
+        if a.tail not in nonImrd:    
+            nonImrd.append(a.tail) 
+    for a in root.findall('.//body/sec/list/list-item/p'):
+        nonImrd.append(a.text)
+        nonImrd.append(a.tail) 
+    for a in root.findall('.//body/sec/list/list-item/p/italic'):
+        nonImrd.append(a.text)
+        nonImrd.append(a.tail) 
+    for a in root.findall('.//body/sec/list/list-item/p/bold'):
+        nonImrd.append(a.text)
+        nonImrd.append(a.tail)  
+    for a in root.findall('.//body/sec/list/list-item/p/italic/bold'):
+        nonImrd.append(a.text)
+        nonImrd.append(a.tail)  
+    for a in root.findall('.//body/sec/list/list-item/p/bold/italic'):
+        nonImrd.append(a.text)
+        nonImrd.append(a.tail)
+    for a in root.findall('.//body/sec/sec/title'):
+        nonImrd.append(a.text)
+        nonImrd.append(a.tail)   
+    for a in root.findall('.//body/sec/sec/p'):
+        nonImrd.append(a.text)
+        nonImrd.append(a.tail)
+    for a in root.findall('.//body/sec/sec/p/underline'):
+        nonImrd.append(a.text)
+        nonImrd.append(a.tail)    
+    for a in root.findall('.//body/sec/sec/p/italic'):
+        nonImrd.append(a.text)
+        nonImrd.append(a.tail)
+    for a in root.findall('.//body/sec/sec/p/bold'):
+        nonImrd.append(a.text)
+        nonImrd.append(a.tail) 
+    for a in root.findall('.//body/sec/sec/p/bold/italic'):
+        nonImrd.append(a.text)
+        nonImrd.append(a.tail) 
+    for a in root.findall('.//body/sec/sec/p/italic/bold'):
+        nonImrd.append(a.text)
+        nonImrd.append(a.tail)        
+    for a in root.findall('.//body/sec/sec/p/boxed-text/caption/title'):
+        nonImrd.append(a.text)
+        nonImrd.append(a.tail)
+    for a in root.findall('.//body/sec/sec/p/boxed-text/p'):
+        nonImrd.append(a.text)
+        nonImrd.append(a.tail) 
+    for a in root.findall('.//body/sec/sec/p/boxed-text/p/italic'):
+        nonImrd.append(a.text)
+        nonImrd.append(a.tail) 
+    for a in root.findall('.//body/sec/sec/p/boxed-text/p/bold'):
+        nonImrd.append(a.text)
+        nonImrd.append(a.tail) 
+    for a in root.findall('.//body/sec/sec/p/boxed-text/p/italic/bold'):
+        nonImrd.append(a.text)
+        nonImrd.append(a.tail)         
+    for a in root.findall('.//body/sec/sec/p/boxed-text/p/bold/italic'):
+        nonImrd.append(a.text)
+        nonImrd.append(a.tail)         
+    for a in root.findall('.//body/sec/sec/p/xref'):
+        nonImrd.append(a.text)
+        nonImrd.append(a.tail)
+    for a in root.findall('.//body/sec/sec/p/sup'):
+        nonImrd.append(a.text)
+        nonImrd.append(a.tail)     
+    for a in root.findall('.//body/sec/sec/sup'):
+        nonImrd.append(a.text)
+        nonImrd.append(a.tail)    
+    for a in root.findall('.//body/sec/sec/sup/xref'):
+        nonImrd.append(a.text)
+        nonImrd.append(a.tail)
+    for a in root.findall('.//body/sec/sec/p/sup/xref'):
+        nonImrd.append(a.text)
+        nonImrd.append(a.tail)         
+    for a in root.findall('.//body/sec/sec/p/sup/'):
+        if a.text not in nonImrd:
+            nonImrd.append(a.text)
+        if a.tail not in nonImrd:    
+            nonImrd.append(a.tail)              
+    for a in root.findall('.//body/sec/sec/p/xref/'):
+        if a.text not in nonImrd:
+            nonImrd.append(a.text)
+        if a.tail not in nonImrd:    
+            nonImrd.append(a.tail) 
+    for a in root.findall('.//body/sec/sec/p/sup/ext-link'):
+        nonImrd.append(a.text)
+        nonImrd.append(a.tail)         
+    for a in root.findall('.//body/sec/sec/list/list-item/p'):
+        nonImrd.append(a.text)
+        nonImrd.append(a.tail) 
+    for a in root.findall('.//body/sec/sec/list/list-item/p/italic'):
+        nonImrd.append(a.text)
+        nonImrd.append(a.tail) 
+    for a in root.findall('.//body/sec/sec/list/list-item/p/bold'):
+        nonImrd.append(a.text)
+        nonImrd.append(a.tail)  
+    for a in root.findall('.//body/sec/sec/list/list-item/p/italic/bold'):
+        nonImrd.append(a.text)
+        nonImrd.append(a.tail)
+    for a in root.findall('.//body/sec/sec/list/list-item/p/bold/italic'):
+        nonImrd.append(a.text)
+        nonImrd.append(a.tail)
+    for a in root.findall('.//body/sec/sec/p/'):
+        if a.text not in nonImrd:
+            nonImrd.append(a.text)
+        if a.tail not in nonImrd:    
+            nonImrd.append(a.tail)           
+    for a in root.findall('.//body/sec/p/'):
+        if a.text not in nonImrd:
+            nonImrd.append(a.text)
+        if a.tail not in nonImrd:    
+            nonImrd.append(a.tail)
+    
+    # Sometimes abstract is not part of the body but part of front/article-meta:    
+    for elem in abstr:
+        if elem not in nonImrd:
+            nonImrd.append(elem)        
+            
+    for val in nonImrd: 
+        if val != None : 
+            nonImrdChapter.append(val)
+
+    nonImrd_str = ''.join(nonImrdChapter)
+    nonImrd_str = nonImrd_str.replace("\n","");
+    nonImrdChapter = nonImrd_str.split()
+
+    nonImrdChapter = [''.join(c for c in s if c not in string.punctuation) for s in nonImrdChapter]
+    nonImrdChapter = [s for s in nonImrdChapter if s]     
+
+    # Additional cleaning:
+    nonImrdChapter_clean = []
+    for e in nonImrdChapter:
+        if e != '.' and e != ',' and e != '–' and e != '=':
+            nonImrdChapter_clean.append(e)     
+ 
+    return(len(nonImrdChapter_clean))            
+    
+def getChapterTitles (root, imrdList):
+
+    chaptTitl = []
+    chapterTitles = []
+    isImrd = True
+    
+    for a in root.findall('.//body/sec/title'):  
+        chaptTitl.append(a.text) 
+    
+    for val in chaptTitl:
+        chapterTitles.append(val.replace("\n",""))  
+    
+    print("\nChapter titles: ", chapterTitles)
+    
+    for val in chapterTitles:
+        if val not in imrdList:
+            isImrd = False
+    print("\nIMRD format: ", isImrd) 
+
+    return(isImrd)    
