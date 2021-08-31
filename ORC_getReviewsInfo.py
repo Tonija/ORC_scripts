@@ -2,6 +2,9 @@ import ORC_main
 
 import re
 import pandas as pd
+from difflib import SequenceMatcher
+import string
+from genderizer.genderizer import Genderizer
 
 def get_authorsResponses (root): 
 # Get authors' responses to reviewers:
@@ -19,6 +22,9 @@ def get_authorsResponses (root):
             for elem in element.findall('.//body/p/italic'):
                 responseID_responses.append(elem.text) 
                 responseID_responses.append(elem.tail)
+            for elem in element.findall('.//body/p/italic/underline'):
+                responseID_responses.append(elem.text) 
+                responseID_responses.append(elem.tail)                
             for elem in element.findall('.//body/p/list/list-item/p'):
                 responseID_responses.append(elem.text) 
                 responseID_responses.append(elem.tail) 
@@ -27,7 +33,18 @@ def get_authorsResponses (root):
                 responseID_responses.append(elem.tail) 
             for elem in element.findall('.//body/p/list/list-item/p/italic'):
                 responseID_responses.append(elem.text) 
-                responseID_responses.append(elem.tail)     
+                responseID_responses.append(elem.tail)
+            for elem in element.findall('.//body/p/ext-link'):
+                responseID_responses.append(elem.text) 
+                responseID_responses.append(elem.tail)    
+            for elem in root.findall('.//body/sec/sec/p/xref'):
+                responseID_responses.append(elem.text)    
+                responseID_responses.append(elem.tail)      
+            for elem in root.findall('.//body/sec/sec/p/xref/'):
+                if elem.text not in responseID_responses:
+                    responseID_responses.append(elem.text)    
+                if elem.tail not in responseID_responses:    
+                    responseID_responses.append(elem.tail)                  
             for elem in element.findall('.//body/p/'):
                 if elem.text not in responseID_responses:
                     responseID_responses.append(elem.text)
@@ -192,8 +209,9 @@ def get_reviewsInfo (root, current_doi):
     fullDoi_fill = []
     # Join appropriate partialDOI with the Version No:
     for partDOI, ver in zip(partialDoi_fill, verNo):
-        fullDoi_fill.append(partDOI + "." + ver) 
-        
+        fullDoi_fill.append(partDOI + "." + ver)
+    
+            
     # Check for case when there are no responses to some reviewers' comments:
     if len(responses_separated) < len(comments_separated):
         for i in range(len(comments_separated)-len(responses_separated)):
@@ -204,55 +222,161 @@ def get_reviewsInfo (root, current_doi):
         
     # Create a DataFrame table containing info on reviewers and reviews 
     global review_info
-    
-    # In case there are more authors' answers for a single review, merge two answers:
-    if len(comments_separated) < len(responses_separated):
-        if (len(responses_separated) - len(comments_separated) == 1):
-            temp_resp_1 = responses_separated[0] + responses_separated[1]
-            temp_resp_2 = []
-            if (len(responses_separated) == 2):
-                temp_resp_2 = [temp_resp_1]
-            if (len(responses_separated) == 3):
-                temp_resp_2 = [responses_separated[2], temp_resp_1]
-            if (len(responses_separated) == 4):
-                temp_resp_2 = [responses_separated[3], responses_separated[2], temp_resp_1]
-            if (len(responses_separated) == 5):
-                temp_resp_2 = [responses_separated[3], responses_separated[3], responses_separated[2], temp_resp_1]
-            print("temp_resp: ", len(temp_resp_2))
-            
-        if (len(responses_separated) - len(comments_separated) == 2):
-            temp_resp_1 = responses_separated[0] + responses_separated[1] + responses_separated[2]
-            temp_resp_2 = []
-            if (len(responses_separated) == 3):
-                temp_resp_2 = [temp_resp_1]
-            if (len(responses_separated) == 4):
-                temp_resp_2 = [responses_separated[3], temp_resp_1]
-            if (len(responses_separated) == 5):
-                temp_resp_2 = [responses_separated[4], responses_separated[3],  temp_resp_1]
-            print("temp_resp: ", len(temp_resp_2))    
-            # TODO: make this not so hardocoded ?
-        
-        if (len(temp_resp_2) == len(comments_separated)):
-            review_info = pd.DataFrame({'dateReviewed':rev_to_date['date'],
+    review_info = pd.DataFrame({'dateReviewed':rev_to_date['date'],
                                     'Version':verNo,
                                     'doi':fullDoi_fill,
                                     'Recommendation':refRecomm,
-                                    'reportID':reportIDs_separated,
-                                    'comments':comments_separated,
-                                    'authors response':temp_resp_2})
-        else:
-            print("REVIEW ARRAY UNEVEN")
-    else:
-        review_info = pd.DataFrame({'dateReviewed':rev_to_date['date'],
-                                'Version':verNo,
-                                'doi':fullDoi_fill,
-                                'Recommendation':refRecomm,
-                                'reportID':reportIDs_separated,
-                                'comments':comments_separated,
-                                'authors response':responses_separated})                              
+                                    'reportID':reportIDs_separated})
+                                    #'comments':comments_separated})                           
 
     print("\nReview information: \n")
     print(review_info)
+ 
+def get_allCommResp (root, current_doi): 
+# get all reviewer's comments and merge them into one list
+# get all authors' responses and merge them into one list
+
+    # Get all reviewers' comments:
+    global allComments
+    allComments = []
+    for el in root.findall('.//sub-article[@article-type="ref-report"]/body/p'):
+        allComments.append(el.text)
+        allComments.append(el.tail)
+    for el in root.findall('.//sub-article[@article-type="ref-report"]/body/p/bold'):
+        allComments.append(el.text)
+        allComments.append(el.tail)
+    for el in root.findall('.//sub-article[@article-type="ref-report"]/body/p/italic'):
+        allComments.append(el.text)
+        allComments.append(el.tail)
+    for el in root.findall('.//sub-article[@article-type="ref-report"]/body/p/italic/bold'):
+        allComments.append(el.text)
+        allComments.append(el.tail)
+    for el in root.findall('.//sub-article[@article-type="ref-report"]/body/p/bold/italic'):
+        allComments.append(el.text)
+        allComments.append(el.tail)     
+    for el in root.findall('.//sub-article[@article-type="ref-report"]/body/p/underline'):
+        allComments.append(el.text)
+        allComments.append(el.tail)    
+    for el in root.findall('.//sub-article[@article-type="ref-report"]/body/p/list/list-item/p'):
+        allComments.append(el.text)
+        allComments.append(el.tail)
+    for el in root.findall('.//sub-article[@article-type="ref-report"]/body/p/list/list-item/p/bold'):
+        allComments.append(el.text)
+        allComments.append(el.tail) 
+    for el in root.findall('.//sub-article[@article-type="ref-report"]/body/p/list/list-item/p/italic'):
+        allComments.append(el.text)
+        allComments.append(el.tail)
+    for el in root.findall('.//sub-article[@article-type="ref-report"]/body/p/xref'):
+        allComments.append(el.text)
+        allComments.append(el.tail) 
+    for el in root.findall('.//sub-article[@article-type="ref-report"]/body/sec/sec/p/xref/'):
+        if el.text not in allComments:
+            allComments.append(el.text)    
+        if elem.tail not in allComments:    
+            allComments.append(el.tail)                  
+    for el in root.findall('.//sub-article[@article-type="ref-report"]/body/p/'):
+        if el.text not in allComments:
+            allComments.append(el.text)
+        if el.tail not in allComments:    
+            allComments.append(el.tail)
+
+    # Get all authors' responses:
+    global allResponses
+    allResponses = []
+    for elem in root.findall('.//sub-article[@article-type="response"]/body/p'):
+        allResponses.append(elem.text)
+        allResponses.append(elem.tail)
+    for elem in root.findall('.//sub-article[@article-type="response"]/body/p/bold'):
+        allResponses.append(elem.text) 
+        allResponses.append(elem.tail)
+    for elem in root.findall('.//sub-article[@article-type="response"]/body/p/italic'):
+        allResponses.append(elem.text) 
+        allResponses.append(elem.tail)
+    for elem in root.findall('.//sub-article[@article-type="response"]/body/p/italic/underline'):
+        allResponses.append(elem.text) 
+        allResponses.append(elem.tail)                
+    for elem in root.findall('.//sub-article[@article-type="response"]/body/p/list/list-item/p'):
+        allResponses.append(elem.text) 
+        allResponses.append(elem.tail) 
+    for elem in root.findall('.//sub-article[@article-type="response"]/body/p/list/list-item/p/bold'):
+        allResponses.append(elem.text) 
+        allResponses.append(elem.tail) 
+    for elem in root.findall('.//sub-article[@article-type="response"]/body/p/list/list-item/p/italic'):
+        allResponses.append(elem.text) 
+        allResponses.append(elem.tail)
+    for elem in root.findall('.//sub-article[@article-type="response"]/body/p/ext-link'):
+        allResponses.append(elem.text) 
+        allResponses.append(elem.tail)    
+    for elem in root.findall('.//sub-article[@article-type="response"]/body/sec/sec/p/xref'):
+        allResponses.append(elem.text)    
+        allResponses.append(elem.tail)      
+    for elem in root.findall('.//sub-article[@article-type="response"]/body/sec/sec/p/xref/'):
+        if elem.text not in allResponses:
+            allResponses.append(elem.text)    
+        if elem.tail not in allResponses:   
+            allResponses.append(elem.tail)             
+    for elem in root.findall('.//sub-article[@article-type="response"]/body/p/'):
+        if elem.text not in allResponses:
+            allResponses.append(elem.text)
+        if elem.tail not in allResponses:    
+            allResponses.append(elem.tail)
+
+    # Find matching sentences (remove reviewers' comments from authors' responses):
+    simmilarity = []
+    for com in allComments:
+        for res in allResponses:
+            if (SequenceMatcher(None, com, res).ratio() > 0.9):
+                simmilarity.append(res)               
+    responses_new = []
+    for val in allResponses:
+        if val not in simmilarity:
+            responses_new.append(val)
+
+    # Clean the comments text:
+    allComm = []
+    for val in allComments: 
+        if val != None : 
+            allComm.append(val)
+
+    allComm_str = ""
+    allComm_str = ''.join(allComm)
+    allComm = allComm_str.split()
+
+    allComm = [''.join(c for c in s if c not in string.punctuation) for s in allComm]
+    allComm = [s for s in allComm if s]     
+
+    # Additional cleaning:
+    allComm_clean = []
+    for e in allComm:
+        if e != '.' and e != ',' and e != '–' and e != '=':
+            allComm_clean.append(e)  
+    
+    # Clean the responses text:    
+    allResp = []
+    for val in responses_new: 
+        if val != None : 
+            allResp.append(val)
+
+    allResp_str = ""
+    allResp_str = ''.join(allResp)
+    allResp_str = allResp_str.replace("\n","");
+    allResp = allResp_str.split()
+
+    allResp = [''.join(c for c in s if c not in string.punctuation) for s in allResp]
+    allResp = [s for s in allResp if s]     
+
+    # Additional cleaning:
+    allResp_clean = []
+    for e in allResp:
+        if e != '.' and e != ',' and e != '–' and e != '=':
+            allResp_clean.append(e) 
+
+    comments_responses_df = pd.DataFrame({'doi': [current_doi],
+                                          'comments': [' '.join(allComm_clean)],
+                                          'responses': [' '.join(allResp_clean)]})
+    
+    print("\nAll comments and responses: ", comments_responses_df) 
+    return(comments_responses_df)    
 
 def get_reviewersInfo (root):
 # Get reviewers' full names and match with the report ID

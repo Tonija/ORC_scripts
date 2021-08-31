@@ -1,3 +1,8 @@
+"""
+Open research Central (ORC) document parser
+Convert ORC XML documents to a standardized data structure
+@authors: Antonija Mijatovic (antonija.mijatovic@mefst.hr)
+"""
 import ORC_main
 import string
 import pandas as pd
@@ -6,6 +11,7 @@ df_accpt = pd.DataFrame()
 df_publ = pd.DataFrame()
 
 def get_ResearchArea(current_doi):
+# Check whether an article belongs to social or medical science field
 
     medDOI_file = open("orc_med_doi.csv", "r")
     socDOI_file = open("orc_soc_doi.csv", "r")
@@ -41,14 +47,12 @@ def get_ResearchArea(current_doi):
     for line in medDOI_file:
         values = line.split()
         if current_doi in line:
-        #if current_doi in values:
             print("Subject Area: Medicine and health sciences")
             research_area = "Medical"
                     
     for line in socDOI_file:
         values = line.split()
         if current_doi in line:
-        #if current_doi in values:
             print("Subject Area: Social sciences")
             research_area = "Social"
             
@@ -64,7 +68,7 @@ def get_ResearchArea(current_doi):
     socDOI_file.close()
 
 def get_MaterialsNo (root):
-# Get number of figures, tables and supplementary material:
+# Get number of figures, tables and supplementary material per article:
 
     # Get number of figures:
     global noFig
@@ -90,7 +94,8 @@ def get_MaterialsNo (root):
     noDataAvail = 0
     for elem in root.findall('.//sec/title'):
         if elem.text != None:
-            if elem.text.startswith('Data availability'):
+            if (elem.text.startswith('Data availab') or elem.text.startswith('Data Availab') or
+                elem.text.startswith('Data and software availab') or elem.text.startswith('Software and data availability')):
                 noDataAvail = noDataAvail + 1
             if noDataAvail:    
                 if elem.text.startswith('Underlying data'):
@@ -99,6 +104,8 @@ def get_MaterialsNo (root):
                     noDataAvail = noDataAvail + 1
                 if elem.text.startswith('Reporting guidelines'):
                     noDataAvail = noDataAvail + 1 
+                if elem.text.startswith('Source data'):
+                    noDataAvail = noDataAvail + 1
 
     # Get number of Supplementary material (Appendix also included):
     global noSuppl
@@ -111,6 +118,7 @@ def get_MaterialsNo (root):
                 noSuppl = noSuppl + 1
 
 def get_articleInfo (root):
+# Get information on time needed to publish an article, version number, etc.
 
     global day_accepted
     day_accepted = []
@@ -150,14 +158,15 @@ def get_articleInfo (root):
     version = pub_status.split()[1][0] # pub_status.split()[1] will return '1;' 
                                        # pub_status.split()[1][0] will return '1'
 
-def createMaterialsInfoDf (current_doi, pdfPagesNum, article_length):
+def createMaterialsInfoDf (current_doi, article_length):
+# Create a pandas DataFrame containing structural information of an article
 
     # Create an DataFrame table for accepted   
     df_accpt = pd.DataFrame({'day':day_accepted,
                             'month':month_accepted,
                             'year':year_accepted})
 
-    #convert to datetime
+    # Convert to datetime:
     df_accpt['date'] = pd.to_datetime(df_accpt[['day','month','year']])
 
     # Create an DataFrame table for published   
@@ -165,23 +174,21 @@ def createMaterialsInfoDf (current_doi, pdfPagesNum, article_length):
                             'month':month_published,
                             'year':year_published})
 
-    #convert to datetime
+    # Convert to datetime:
     df_publ['date'] = pd.to_datetime(df_publ[['day','month','year']])
     
     # Create a DataFrame table containing relevant article information:
     global materials_info
     materials_info = pd.DataFrame({'doi':[current_doi],
-                                 #'version':[version],
-                                 'researchArea':[research_area],
-                                 'NoPdfPages':pdfPagesNum[-1],
-                                 'dateAccepted':[df_accpt['date'][0]],
-                                 'datePublished':[df_publ['date'][0]],
-                                 'NoFigures':[noFig],
-                                 'NoTables':[noTables],
-                                 'NoFormulas':noFormulas,
-                                 'NoSupplementary': [noSuppl],
-                                 'NoDataAvailability':[noDataAvail],
-                                 'totalArticleSize':[article_length]})
+                                   'researchArea':[research_area],
+                                   'dateAccepted':[df_accpt['date'][0]],
+                                   'datePublished':[df_publ['date'][0]],
+                                   'NoFigures':[noFig],
+                                   'NoTables':[noTables],
+                                   'NoFormulas':noFormulas,
+                                   'NoSupplementary': [noSuppl],
+                                   'NoDataAvailability':[noDataAvail],
+                                   'totalArticleSize':[article_length]})
     print("\nMaterials information: \n")
     print(materials_info)
     
